@@ -1,8 +1,5 @@
 #!/usr/bin/python
 import sys,io
-# old_stdout = sys.stdout
-# stdout = io.StringIO()
-# sys.stdout = stdout
 
 import threading
 import readline
@@ -14,7 +11,6 @@ import signal
 from termcolor import colored
 from core.functions import *
 from core.weblistener import *
-#from flask import *
 
 
 @app.route("/webinterface", methods=["POST","GET"])
@@ -124,14 +120,14 @@ listener.create_path();
 listeners=listener
 listeners=NewListener()
 
-def ctrlc(sig, frame):
-    return
-
-signal.signal(signal.SIGINT, ctrlc)
-if not os.path.isfile(".oct_history"):
-    open('.oct_history', 'a').close()
-else:
-    readline.read_history_file(".oct_history")
+# def ctrlc(sig, frame):
+#     return
+#
+# signal.signal(signal.SIGINT, ctrlc)
+# if not os.path.isfile(".oct_history"):
+#     open('.oct_history', 'a').close()
+# else:
+#     readline.read_history_file(".oct_history")
 
 banner()
 
@@ -233,6 +229,7 @@ def run(command):
                 else:
                     proto_to_use = "http"
                 listeners.create_hta()
+                print("--->",host_ip,file=sys.stderr)
                 generate_hta(host_ip,bind_port,proto_to_use)
             except KeyError:
                 print(colored("[-] Wrong listener selected !", "red"))
