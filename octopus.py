@@ -101,8 +101,6 @@ def basic_command_handler(command):
         if command == "std":
             print(stdout_history.getvalue())
 
-
-        #command = input("\033[4mOctopus\033[0m"+colored(" >>", "green"))
         if command == "list":
             list_sessions()
 
