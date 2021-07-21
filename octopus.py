@@ -393,55 +393,6 @@ def basic_command_handler(command):
                 print(colored("[-] Wrong listener selected !", "red"))
                 return
 
-
-        # if command.split(" ")[0] == "interact":
-        #         readline.set_completer(completer_interact)
-        #         readline.parse_and_bind("tab: complete")
-
-        #         try:
-        #             session = connections_information[int(command.split(" ")[1])]
-        #         except:
-        #             print(colored("[-] Error interacting with host", "red"))
-        #             return
-        #         while True:
-        #             try:
-        #                 scommand = input("(%s) >> " % colored(session[2], "red"))
-        #                 if scommand == "":
-        #                     return
-        #                 elif scommand == "exit" or scommand == "back":
-        #                     break
-        #                 elif scommand == "help":
-        #                     interact_help()
-        #                 elif scommand == "clear":
-        #                     os.system("clear")
-
-        #                 elif scommand == "modules":
-        #                     list_modules()
-        #                     pass
-        #                 elif scommand.split(" ")[0] == "load":
-        #                     try:
-        #                         module_name = scommand.split(" ")[1]
-        #                         load_module(session[2], module_name)
-        #                         pass
-        #                     except IndexError:
-        #                         print(colored("[+] Please select a module !"))
-
-        #                 elif scommand.split(" ")[0] == "deploy_cobalt_beacon":
-        #                     try:
-        #                         beacon_path = scommand.split(" ")[1]
-        #                         deploy_cobalt_beacon(session[2], beacon_path)
-        #                         pass
-        #                     except IndexError:
-        #                         print(colored("[+] Please select a valid beacon path!", "red"))
-
-        #                 elif scommand == "disable_amsi":
-        #                     disable_amsi(session[2])
-        #                     pass
-        #                 else:
-        #                     send_command(session[2], scommand)
-        #             except:
-        #                 print(" ")
-
         elif command.split(" ")[0] == "listen_http":
             try:
                 # create new listeners for
