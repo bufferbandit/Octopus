@@ -5,6 +5,7 @@ import threading
 import time
 import base64
 import sys
+import io
 import os
 import signal
 import string
@@ -24,7 +25,7 @@ if parentfolder not in sys.path:
 from profile import *
 # disable logging
 
-app = Flask(__name__)
+app = Flask(__name__,template_folder="../templates",static_folder="../static")
 log = logging.getLogger('werkzeug')
 log.disabled = True
 
@@ -346,3 +347,44 @@ def first_ping():
             return response
         except:
             return ""
+
+@app.after_request
+def after_request_func(response):
+        if not response.is_streamed:
+            global outward_address
+            del response.headers["Server"]
+            response.direct_passthrough = False
+            response.data=response.data.replace(b"0.0.0.0", bytes(os.environ["OUTWARD_ADDRESS"],"utf8")).replace(bytes(":"+os.environ["PORT"],"utf8"),b"")
+        return response
+
+stdout_buffer = io.StringIO()
+PUSH_DATA = ""
+SEQ_NUM = 0
+STOP = False
+
+
+def create_data_stream():
+    global count,PUSH_DATA,STOP,SEQ_NUM
+    while not STOP:
+        time.sleep(1)
+        stdout_buffer.getvalue()
+        PUSH_DATA = PUSH_DATA.replace("\n","<NEWLINE>")
+        yield f"data: {PUSH_DATA}  <SEQ_NUM>{SEQ_NUM}>\n\n"
+
+@app.route("/sse")
+def push_route():return Response(create_data_stream(), mimetype='text/event-stream')
+
+@app.before_request
+def before_request():
+    if request.endpoint != "push_route":
+        global stdout_buffer,PUSH_DATA,SEQ_NUM
+        stdout_buffer = io.StringIO()
+        sys.stdout = stdout_buffer
+
+@app.teardown_request
+def teardown_request(exception=None):
+    if request.endpoint != "push_route":
+        global stdout_buffer,PUSH_DATA,SEQ_NUM
+        PUSH_DATA = stdout_buffer.getvalue()
+        sys.stdout = sys.__stdout__
+        SEQ_NUM += 1

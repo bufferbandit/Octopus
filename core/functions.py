@@ -300,6 +300,7 @@ def generate_macro(hostname, path, proto, output_path):
     code = code.replace("OCTCHAR", char)
     code = code.replace("VARVAR", char2)
     code = code.replace("TEMPTEMP", fake_file_name)
+    print(code)
     ft.close()
     try:
         f = open(output_path, "w")
