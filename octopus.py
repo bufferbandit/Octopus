@@ -16,9 +16,8 @@ from core.weblistener import *
 assert os.environ.get("OUTWARD_ADDRESS") and os.environ.get("PORT")
 
 history = ""
-stdout_history = io.StringIO()
+#stdout_history = io.StringIO()
 banner()
-
 
 
 
@@ -59,6 +58,7 @@ listeners=listener
 
 def interact_command_handler(command,session_id):
     try:
+        print(f"[{session_id}] Running command: {command}")
         session = connections_information[session_id]
         scommand = command
         if scommand == "":
@@ -100,16 +100,13 @@ def interact_command_handler(command,session_id):
 
 def basic_command_handler(command):
     global listeners, history
-    try:
-
-        if command == "std":
-            print(stdout_history.getvalue())
-
+    try:        
+        print(f"[+] Running command: {command}")
         if command == "list":
             list_sessions()
 
         if command == "history":
-                print(history)
+                print(history_buffer.getvalue())
 
         if command == "help":
             main_help_banner()

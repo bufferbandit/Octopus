@@ -358,10 +358,11 @@ def after_request_func(response):
             response.data=response.data.replace(b"0.0.0.0", bytes(os.environ["OUTWARD_ADDRESS"],"utf8")).replace(bytes(":"+os.environ["PORT"],"utf8"),b"")
         return response
 
-stdout_buffer = io.StringIO()
 PUSH_DATA = ""
 SEQ_NUM = 0
 STOP = False
+
+history_buffer = stdout_buffer = io.StringIO()
 
 
 def create_data_stream():
@@ -381,6 +382,9 @@ def push_route():return Response(create_data_stream(), mimetype='text/event-stre
 def before_request():
     if not request.endpoint in ["push_route","command"]:
         global stdout_buffer,PUSH_DATA,SEQ_NUM
+        
+        history_buffer.write(stdout_buffer.getvalue())
+
         stdout_buffer = io.StringIO()
         sys.stdout = stdout_buffer
 
