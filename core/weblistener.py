@@ -372,7 +372,9 @@ def create_data_stream():
         PUSH_DATA = PUSH_DATA.replace("\n","<NEWLINE>")
         yield f"data: {quote(PUSH_DATA)}  <SEQ_NUM>{SEQ_NUM}\n\n"
 
+
 @app.route("/sse")
+@login_required
 def push_route():return Response(create_data_stream(), mimetype='text/event-stream')
 
 @app.before_request

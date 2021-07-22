@@ -20,34 +20,8 @@ stdout_history = io.StringIO()
 banner()
 
 
-from functools import wraps
-from flask import request
-from config import basic_http_username, basic_http_password
-import hashlib
-
-def eprint(*args,**kwargs):print(*args,**kwargs,file=sys.stderr)
 
 
-
-
-def login_required(f):
-    def verify_auth(header_b64_str):
-        encoded_uname_pass = header_b64_str.split()[-1]
-        username,password = base64.b64decode(encoded_uname_pass)\
-                                    .decode("utf-8")\
-                                    .split(":")
-        md5_password = hashlib.md5(password.encode('utf-8')).hexdigest()
-        return username == basic_http_username and md5_password == basic_http_password
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        authorization_header = request.headers.get('Authorization')
-        if authorization_header and verify_auth(authorization_header):
-            return f(*args, **kwargs)
-        else:
-           return ('Unauthorized', 401, {'WWW-Authenticate': 'Basic realm="Login Required"'})
-        return f(*args, **kwargs)
-    return decorated        
-    
 
 
 
