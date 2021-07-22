@@ -477,7 +477,7 @@ def main_help_banner():
     print("Hint : the commands with * have arguments and you can see them by typing the command name only\n")
     print("+++++++++")
     print("help  \t\t\t\t\tshow this help menu")
-    print("history  \t\t\t\t\get the history of commands and output")
+    print("history  \t\t\t\t\tget the history of commands and output")
     print("list  \t\t\t\t\tlist all connected agents")
     print("listeners \t\t\t\tlist all listeners")
     print("* generate_powershell \t\t\tgenerate powershell oneliner")

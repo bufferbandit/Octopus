@@ -14,9 +14,6 @@ from core.weblistener import *
 
 # assert the env vars do exist
 assert os.environ.get("OUTWARD_ADDRESS") and os.environ.get("PORT")
-
-history = ""
-#stdout_history = io.StringIO()
 banner()
 
 
@@ -31,12 +28,10 @@ def webinterface():
     if request.method == 'POST':
         input = request.form["input"]
         session_id = int(request.form["session_id"])
-
         if session_id > -1:
             interact_command_handler(input,session_id)
         else:
             basic_command_handler(input)
-        history += input
         return ""
     else:return render_template("webinterface_page.html")
        
@@ -58,7 +53,7 @@ listeners=listener
 
 def interact_command_handler(command,session_id):
     try:
-        print(f"[{session_id}] Running command: {command}")
+        print(f"[*] Attempting to run command in session {session_id}: {command}")
         session = connections_information[session_id]
         scommand = command
         if scommand == "":
@@ -101,7 +96,7 @@ def interact_command_handler(command,session_id):
 def basic_command_handler(command):
     global listeners, history
     try:        
-        print(f"[+] Running command: {command}")
+        print(f"[*] Attempting to run command: {command}")
         if command == "list":
             list_sessions()
 

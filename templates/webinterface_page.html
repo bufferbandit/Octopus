@@ -1,5 +1,5 @@
 <!doctype html>
-<html>
+<html style="background:black">
 <head>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/xterm.css') }}" />
     <script src="https://cdn.jsdelivr.net/npm/xterm@4.5.0/lib/xterm.js"></script>     
@@ -8,34 +8,38 @@
 
 
 </head>
-<body>
+<body style="margin:0;padding:0;overflow:hidden">
     <div id="terminal"></div>
     <script>
         
-        const term = new Terminal({cursorBlink:true})
-        f = new FitAddon.FitAddon();
-        term.loadAddon(f);
-        term.open(document.getElementById('terminal'));
+        const term = new Terminal({cursorBlink:true, theme: {background: 'black'}})
+        f = new FitAddon.FitAddon()
+        term.loadAddon(f)
+        term.open(document.getElementById('terminal'))
 
-        const width = window.innerWidth - 230;
-        const height = window.innerHeight - 140;
-        cols = parseInt(width / 9, 10);
-        //term.fit();
-        term.resize(cols, parseInt(height / 17, 10));
-        term.scrollToBottom();
+        const width = window.innerWidth
+        const height = window.innerHeight 
+        cols = parseInt(width / 9, 10)
+        term.resize(cols, parseInt(height / 17, 10))
+        term.scrollToBottom()
 
-        var prev_line = "";
-        var session_id = -1;
-        var term_str = "\r\n\x1b[4mOctopus\x1b[0m\x1b[32m >>\x1b[0m ";
+
+        
+
+        var prev_line = ""
+        var session_id = -1
+        var term_str = "\r\n\x1b[4mOctopus\x1b[0m\x1b[32m >>\x1b[0m "
+        
 
         function runFakeTerminal() {
             if (term._initialized) {
-                return;
+                return
             }
-            term._initialized = true;
+            term._initialized = true
             term.prompt = () => {
-                term.write(term_str);
-            };
+                term.write(term_str)
+            }
+            
             term.prompt()
             var buff = Array()
             term.onData(e => {
@@ -43,22 +47,22 @@
                     case '\r':
                         var command = buff.join("")
                         loadAndWrite(command)
-                        buff.length = 0;
+                        buff.length = 0
                     case '\u0003':
-                        break;
+                        break
                     case '\u007F':
                         if (session_id === -1 && 
                             term._core.buffer.x > 11) {
                             buff.pop()
-                            term.write('\b \b');
+                            term.write('\b \b')
                         }else if(session_id > -1 &&
                                 term._core.buffer.x > (6 + session_id.length)){
                             buff.pop()
-                            term.write('\b \b');
+                            term.write('\b \b')
                         }
-                        break;
+                        break
                     default:
-                        term.write(e);
+                        term.write(e)
                         buff.push(e)
                 }
             })
@@ -68,7 +72,7 @@
         const sse = new EventSource('/sse')
         sse.onmessage = (msg) => {
                 var data = msg.data
-                var div = document.getElementById('terminal');
+                var div = document.getElementById('terminal')
                 var [data,seq_num] = data.split("<SEQ_NUM>")
                 var data = decodeURIComponent(data)
                 data = data.replace(/\<NEWLINE\>/g, '\n\r')
@@ -79,8 +83,9 @@
                     term.prompt()   
                 }
         }
+        
         window.onbeforeunload = function() {
-            sse.close();
+            sse.close()
         }
         
         function loadAndWrite(command) {
@@ -90,13 +95,13 @@
                 return
             }
             if(session_id > -1 && command == "exit"){
-                session_id = -1;
-                term_str = "\r\n\x1b[4mOctopus\x1b[0m\x1b[32m >>\x1b[0m ";
+                session_id = -1
+                term_str = "\r\n\x1b[4mOctopus\x1b[0m\x1b[32m >>\x1b[0m "
                 term.prompt()
                 return
             }
             prev_line = command
-            var formData = new FormData();
+            var formData = new FormData()
             formData.append("input", command)
             formData.append("session_id", session_id)
             fetch(window.location.href, {
@@ -105,11 +110,10 @@
             }).then((response) => {
                 response.text()
                     .then( raw => raw.replace(/\n/g, '\n\r') )
-                    //.then( data => term.write(data) )
                     .then( _ => term.prompt())
             })
         }
-        runFakeTerminal();
+        runFakeTerminal()
     </script>
 </body>
 </html>
