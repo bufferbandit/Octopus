@@ -69,9 +69,10 @@
         const sse = new EventSource('/sse')
         sse.onmessage = (msg) => {
                 var data = msg.data
-                data = data.replace(/\<NEWLINE\>/g, '\n\r')
                 var div = document.getElementById('terminal');
                 var [data,seq_num] = data.split("<SEQ_NUM>")
+                var data = decodeURIComponent(data)
+                data = data.replace(/\<NEWLINE\>/g, '\n\r')
                 if(data.trim().length && 
                     seq_num != prev_seq_num){
                     term.write(data)
@@ -87,10 +88,13 @@
             if(command.startsWith("interact") && session_id === -1){
                 session_id = command.split(" ")[1]
                 term_str = "\r\n([31m" + session_id + "[0m) >> "
+                return
             }
             if(session_id > -1 && command == "exit"){
                 session_id = -1;
                 term_str = "\r\n\x1b[4mOctopus\x1b[0m\x1b[32m >>\x1b[0m ";
+                term.prompt()
+                return
             }
             prev_line = command
             var formData = new FormData();

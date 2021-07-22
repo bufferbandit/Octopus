@@ -18,6 +18,7 @@ from .esa import *
 from flask import *
 import logging
 import urllib3
+from urllib.parse import quote
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 parentfolder = os.path.abspath("..")
 if parentfolder not in sys.path:
@@ -369,21 +370,21 @@ def create_data_stream():
         time.sleep(1)
         stdout_buffer.getvalue()
         PUSH_DATA = PUSH_DATA.replace("\n","<NEWLINE>")
-        yield f"data: {PUSH_DATA}  <SEQ_NUM>{SEQ_NUM}>\n\n"
+        yield f"data: {quote(PUSH_DATA)}  <SEQ_NUM>{SEQ_NUM}\n\n"
 
 @app.route("/sse")
 def push_route():return Response(create_data_stream(), mimetype='text/event-stream')
 
 @app.before_request
 def before_request():
-    if request.endpoint != "push_route":
+    if not request.endpoint in ["push_route","command"]:
         global stdout_buffer,PUSH_DATA,SEQ_NUM
         stdout_buffer = io.StringIO()
         sys.stdout = stdout_buffer
 
 @app.teardown_request
 def teardown_request(exception=None):
-    if request.endpoint != "push_route":
+    if not request.endpoint in ["push_route","command"]:
         global stdout_buffer,PUSH_DATA,SEQ_NUM
         PUSH_DATA = stdout_buffer.getvalue()
         sys.stdout = sys.__stdout__

@@ -34,7 +34,7 @@ def webinterface():
         else:
             basic_command_handler(input)
         history += input
-        return stdout_str
+        return ""
     else:return render_template("webinterface_page.html")
        
 from profile import *
