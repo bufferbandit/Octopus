@@ -11,6 +11,8 @@
 <body style="margin:0;padding:0;overflow:hidden">
     <div id="terminal"></div>
     <script>
+
+        
         
         const term = new Terminal({cursorBlink:true, theme: {background: 'black'}})
         f = new FitAddon.FitAddon()
@@ -22,10 +24,7 @@
         cols = parseInt(width / 9, 10)
         term.resize(cols, parseInt(height / 17, 10))
         term.scrollToBottom()
-
-
         
-
         var prev_line = ""
         var session_id = -1
         var term_str = "\r\n\x1b[4mOctopus\x1b[0m\x1b[32m >>\x1b[0m "

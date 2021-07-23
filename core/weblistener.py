@@ -358,12 +358,9 @@ def after_request_func(response):
             response.data=response.data.replace(b"0.0.0.0", bytes(os.environ["OUTWARD_ADDRESS"],"utf8")).replace(bytes(":"+os.environ["PORT"],"utf8"),b"")
         return response
 
-PUSH_DATA = ""
-SEQ_NUM = 0
-STOP = False
 
+PUSH_DATA,SEQ_NUM,STOP = "",0,False
 history_buffer = stdout_buffer = io.StringIO()
-
 
 def create_data_stream():
     global count,PUSH_DATA,STOP,SEQ_NUM
@@ -373,7 +370,6 @@ def create_data_stream():
         PUSH_DATA = PUSH_DATA.replace("\n","<NEWLINE>")
         yield f"data: {quote(PUSH_DATA)}  <SEQ_NUM>{SEQ_NUM}\n\n"
 
-
 @app.route("/sse")
 @login_required
 def push_route():return Response(create_data_stream(), mimetype='text/event-stream')
@@ -382,9 +378,7 @@ def push_route():return Response(create_data_stream(), mimetype='text/event-stre
 def before_request():
     if not request.endpoint in ["push_route","command"]:
         global stdout_buffer,PUSH_DATA,SEQ_NUM
-        
         history_buffer.write(stdout_buffer.getvalue())
-
         stdout_buffer = io.StringIO()
         sys.stdout = stdout_buffer
 

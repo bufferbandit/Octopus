@@ -11,21 +11,21 @@ import signal
 from termcolor import colored
 from core.functions import *
 from core.weblistener import *
+from profile import *
+
 
 # assert the env vars do exist
 assert os.environ.get("OUTWARD_ADDRESS") and os.environ.get("PORT")
+
+
 banner()
-
-
-
 
 
 
 @app.route("/webinterface", methods=["POST","GET"])
 @login_required
 def webinterface():
-    global history
-    if request.method == 'POST':
+    if request.method == "POST":
         input = request.form["input"]
         session_id = int(request.form["session_id"])
         if session_id > -1:
@@ -33,9 +33,8 @@ def webinterface():
         else:
             basic_command_handler(input)
         return ""
-    else:return render_template("webinterface_page.html")
-       
-from profile import *
+    elif request.method == "GET":
+        return render_template("webinterface_page.html")
 
 python_version = sys.version_info[0]
 
@@ -101,7 +100,7 @@ def basic_command_handler(command):
             list_sessions()
 
         if command == "history":
-                print(history_buffer.getvalue())
+            print(history_buffer.getvalue())
 
         if command == "help":
             main_help_banner()
