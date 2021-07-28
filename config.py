@@ -3,6 +3,8 @@
 # unicorn path
 # if you don't have it check https://github.com/trustedsec/unicorn
 # unicorn used to convert powershell agent into vba macro
+from Crypto.Cipher import AES
+import os,random,string
 
 unicorn_path = "/opt/redteaming/unicorn-3.15/unicorn.py"
 
