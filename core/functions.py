@@ -29,8 +29,11 @@ listeners_information = {}
 commands = {}
 
 
-key = "".join([random.choice(string.ascii_uppercase) for i in range(32)])
-iv = "".join([random.choice(string.ascii_uppercase) for i in range(AES.block_size)])
+key = conf__aes_key
+iv = conf__aes_iv
+
+print(f"[*] Using AES key: {key}")
+print(f"[*] Using AES IV: {iv}")
 
 aes_key = base64.b64encode(bytearray(key, "UTF-8")).decode()
 aes_iv = base64.b64encode(bytearray(iv, "UTF-8")).decode()

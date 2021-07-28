@@ -355,7 +355,7 @@ def after_request_func(response):
             global outward_address
             del response.headers["Server"]
             response.direct_passthrough = False
-            response.data=response.data.replace(b"0.0.0.0", bytes(os.environ["OUTWARD_ADDRESS"],"utf8")).replace(bytes(":"+os.environ["PORT"],"utf8"),b"")
+            response.data=response.data.replace(b"0.0.0.0", bytes(conf__outward_address,"utf8")).replace(bytes(":"+ conf__port,"utf8"),b"")
         return response
 
 

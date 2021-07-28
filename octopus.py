@@ -14,10 +14,6 @@ from core.weblistener import *
 from profile import *
 
 
-# assert the env vars do exist
-assert os.environ.get("OUTWARD_ADDRESS") and os.environ.get("PORT")
-
-
 banner()
 
 
@@ -44,7 +40,7 @@ if python_version != 3:
     sys.exit()
 
 
-listener = NewListener("startup","0.0.0.0",os.environ["PORT"], "0.0.0.0","1","r");
+listener = NewListener("startup","0.0.0.0",conf__port, "0.0.0.0","1","r");
 listener.start_listener();
 listener.create_path();
 listeners=listener
