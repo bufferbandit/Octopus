@@ -18,6 +18,7 @@ from .esa import *
 from flask import *
 import logging
 import urllib3
+import std_out_capture
 from urllib.parse import quote
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 parentfolder = os.path.abspath("..")
@@ -359,16 +360,11 @@ def after_request_func(response):
         return response
 
 
-PUSH_DATA,SEQ_NUM,STOP = "",0,False
-history_buffer = stdout_buffer = io.StringIO()
-
 def create_data_stream():
-    global count,PUSH_DATA,STOP,SEQ_NUM
-    while not STOP:
+    while not std_out_capture.STOP:
         time.sleep(1)
-        stdout_buffer.getvalue()
-        PUSH_DATA = PUSH_DATA.replace("\n","<NEWLINE>")
-        yield f"data: {quote(PUSH_DATA)}  <SEQ_NUM>{SEQ_NUM}\n\n"
+        std_out_capture.PUSH_DATA = std_out_capture.PUSH_DATA.replace("\n","<NEWLINE>")
+        yield f"data: {quote(std_out_capture.PUSH_DATA)}  <SEQ_NUM>{std_out_capture.SEQ_NUM}\n\n"
 
 @app.route("/sse")
 @login_required
@@ -377,15 +373,29 @@ def push_route():return Response(create_data_stream(), mimetype='text/event-stre
 @app.before_request
 def before_request():
     if not request.endpoint in ["push_route","command"]:
-        global stdout_buffer,PUSH_DATA,SEQ_NUM
-        history_buffer.write(stdout_buffer.getvalue())
-        stdout_buffer = io.StringIO()
-        sys.stdout = stdout_buffer
+        if not std_out_capture.INTERUPT_HISTORY:   
+            std_out_capture.history_buffer.write(std_out_capture.stdout_buffer.getvalue())
+        else:
+            std_out_capture.INTERUPT_HISTORY=False
+        std_out_capture.stdout_buffer = io.StringIO()
+        sys.stdout = std_out_capture.stdout_buffer
 
 @app.teardown_request
 def teardown_request(exception=None):
     if not request.endpoint in ["push_route","command"]:
-        global stdout_buffer,PUSH_DATA,SEQ_NUM
-        PUSH_DATA = stdout_buffer.getvalue()
+        std_out_capture.PUSH_DATA = std_out_capture.stdout_buffer.getvalue()
         sys.stdout = sys.__stdout__
-        SEQ_NUM += 1
+        std_out_capture.SEQ_NUM += 1
+
+@app.before_first_request
+def beadasfore():
+    if not std_out_capture.INTERUPT_HISTORY:   
+        std_out_capture.history_buffer.write(std_out_capture.stdout_buffer.getvalue())
+    else:
+        std_out_capture.INTERUPT_HISTORY=False
+    std_out_capture.stdout_buffer = io.StringIO()
+    sys.stdout = std_out_capture.stdout_buffer
+    banner()
+    std_out_capture.PUSH_DATA = std_out_capture.stdout_buffer.getvalue()
+    sys.stdout = sys.__stdout__
+    std_out_capture.SEQ_NUM += 1

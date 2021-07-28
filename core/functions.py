@@ -19,6 +19,7 @@ from functools import wraps
 from flask import request
 from config import basic_http_username, basic_http_password
 import hashlib
+import sys
 
 
 requests = []
@@ -31,9 +32,6 @@ commands = {}
 
 key = conf__aes_key
 iv = conf__aes_iv
-
-print(f"[*] Using AES key: {key}")
-print(f"[*] Using AES IV: {iv}")
 
 aes_key = base64.b64encode(bytearray(key, "UTF-8")).decode()
 aes_iv = base64.b64encode(bytearray(iv, "UTF-8")).decode()
@@ -480,7 +478,9 @@ def main_help_banner():
     print("Hint : the commands with * have arguments and you can see them by typing the command name only\n")
     print("+++++++++")
     print("help  \t\t\t\t\tshow this help menu")
-    print("history  \t\t\t\t\tget the history of commands and output")
+    print("history  \t\t\t\tget the history of commands and output")
+    print("banner  \t\t\t\tprint the banner")
+    print("clear_history  \t\t\t\tclear history")
     print("list  \t\t\t\t\tlist all connected agents")
     print("listeners \t\t\t\tlist all listeners")
     print("* generate_powershell \t\t\tgenerate powershell oneliner")
@@ -588,10 +588,13 @@ def banner():
 
 {2} Octopus C2 | Control your shells {1}
 
+[*] Using AES key: {4}
+[*] Using AES IV: {5}
+
 '''
 
 
-    print((banner.format(CRED, ENDC, OKGREEN, Yellow)))
+    print((banner.format(CRED, ENDC, OKGREEN, Yellow,key,iv)))
 
 
 

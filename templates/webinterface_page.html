@@ -7,17 +7,23 @@
     <script src="{{ url_for('static', filename='js/xterm-addon-fit.js') }}"></script>    
 
 
+    <script src="https://cdn.jsdelivr.net/npm/xterm@4.5.0/lib/xterm.js"></script>     
+
+
 </head>
 <body style="margin:0;padding:0;overflow:hidden">
     <div id="terminal"></div>
     <script>
-
-        
         
         const term = new Terminal({cursorBlink:true, theme: {background: 'black'}})
-        f = new FitAddon.FitAddon()
-        term.loadAddon(f)
+        term.loadAddon(new FitAddon.FitAddon())
+
         term.open(document.getElementById('terminal'))
+
+
+        
+
+        //term.textarea
 
         const width = window.innerWidth
         const height = window.innerHeight 
@@ -28,8 +34,23 @@
         var prev_line = ""
         var session_id = -1
         var term_str = "\r\n\x1b[4mOctopus\x1b[0m\x1b[32m >>\x1b[0m "
-        
 
+        var aliasses = {
+            "h":"history",
+            "b":"banner",
+            "l":"list",
+        }
+
+        function command_muzzle(command){
+            var command = aliasses[command] ? aliasses[command] : command
+            if(command == "clear"){
+                term.reset()
+                term.prompt()
+                return
+            }
+            return command
+        }
+        
         function runFakeTerminal() {
             if (term._initialized) {
                 return
@@ -41,10 +62,20 @@
             
             term.prompt()
             var buff = Array()
+
+            term.onload = function(){
+                alert(2)
+            }
+
+            term.textarea.onload= function(){
+                alert(3)
+            }
+
+
             term.onData(e => {
                 switch (e) {
                     case '\r':
-                        var command = buff.join("")
+                        var command = command_muzzle(buff.join(""))
                         loadAndWrite(command)
                         buff.length = 0
                     case '\u0003':
@@ -67,6 +98,10 @@
             })
         }
 
+        setTimeout(function() {
+            send_command_request("history")
+        }, 900);
+
         prev_seq_num = "-1"
         const sse = new EventSource('/sse')
         sse.onmessage = (msg) => {
@@ -87,6 +122,20 @@
             sse.close()
         }
         
+        function send_command_request(command){
+            prev_line = command
+            var formData = new FormData()
+            formData.append("input", command)
+            formData.append("session_id", session_id)
+            fetch(window.location.href, {
+                method: "POST",
+                body: formData,
+            }).then((response) => {
+                response.text()
+                    .then( raw => raw.replace(/\n/g, '\n\r') )
+            })
+        }
+
         function loadAndWrite(command) {
             if(command.startsWith("interact") && session_id === -1){
                 session_id = command.split(" ")[1]
@@ -99,20 +148,11 @@
                 term.prompt()
                 return
             }
-            prev_line = command
-            var formData = new FormData()
-            formData.append("input", command)
-            formData.append("session_id", session_id)
-            fetch(window.location.href, {
-                method: "POST",
-                body: formData,
-            }).then((response) => {
-                response.text()
-                    .then( raw => raw.replace(/\n/g, '\n\r') )
-                    .then( _ => term.prompt())
-            })
+            send_command_request(command)
+            term.prompt()
         }
         runFakeTerminal()
+        // send_command_request("history")
     </script>
 </body>
 </html>

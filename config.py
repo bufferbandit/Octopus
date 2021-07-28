@@ -9,8 +9,8 @@ import os,random,string
 unicorn_path = "/opt/redteaming/unicorn-3.15/unicorn.py"
 
 
-basic_http_username = "octopus"
-basic_http_password = "e9394cecde3a038a82e922892e45436f" # octopus_password
+basic_http_username = os.getenv("USERNAME")
+basic_http_password = os.getenv("PASSWORD")
 
 #assert os.environ.get("OUTWARD_ADDRESS") and os.environ.get("PORT")
 

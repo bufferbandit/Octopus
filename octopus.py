@@ -9,12 +9,17 @@ import os
 import io
 import signal
 from termcolor import colored
+
+
+
 from core.functions import *
 from core.weblistener import *
 from profile import *
+import std_out_capture
 
 
-banner()
+
+
 
 
 
@@ -44,6 +49,7 @@ listener = NewListener("startup","0.0.0.0",conf__port, "0.0.0.0","1","r");
 listener.start_listener();
 listener.create_path();
 listeners=listener
+
 
 
 def interact_command_handler(command,session_id):
@@ -89,18 +95,28 @@ def interact_command_handler(command,session_id):
             
 
 def basic_command_handler(command):
-    global listeners, history
+    global listeners
     try:        
         print(f"[*] Attempting to run command: {command}")
         if command == "list":
             list_sessions()
 
         if command == "history":
-            print(history_buffer.getvalue())
+            std_out_capture.INTERUPT_HISTORY = True
+            print("[+] History\n----------------------------------------")
+            print(std_out_capture.history_buffer.getvalue())
+           
+
+
+        if command == "clear_history":
+            std_out_capture.history_buffer.truncate(0)
+            std_out_capture.history_buffer.seek(0)
 
         if command == "help":
             main_help_banner()
 
+        if command == "banner":
+            banner()
 
         if command == "listeners":
             list_listeners()
