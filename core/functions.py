@@ -29,6 +29,12 @@ connections_information = {}
 listeners_information = {}
 commands = {}
 
+try:
+    dbx = dropbox.Dropbox(conf__db_key)
+except:
+    dbx = None
+
+
 
 key = conf__aes_key
 iv = conf__aes_iv

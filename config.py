@@ -4,7 +4,7 @@
 # if you don't have it check https://github.com/trustedsec/unicorn
 # unicorn used to convert powershell agent into vba macro
 from Crypto.Cipher import AES
-import os,random,string
+import os, string, random,dropbox
 
 unicorn_path = "/opt/redteaming/unicorn-3.15/unicorn.py"
 
@@ -20,3 +20,5 @@ conf__outward_address = os.getenv("OUTWARD_ADDRESS")
 
 conf__aes_key = "".join([random.choice(string.ascii_uppercase) for i in range(32)]) if not os.getenv("AES_KEY") else os.getenv("AES_KEY")
 conf__aes_iv = "".join([random.choice(string.ascii_uppercase) for i in range(AES.block_size)]) if not os.getenv("AES_IV") else os.getenv("AES_IV")
+
+conf__db_key = os.getenv("DB_KEY")

