@@ -319,7 +319,7 @@ def cr():
             results = decrypt_command(aes_key, aes_iv, encrypted_response).strip("\x00")
             hostname = decrypt_command(aes_key, aes_iv, encrypted_hostname).strip("\x00")
             command = decrypt_command(aes_key, aes_iv, encrypted_command).strip("\x00")
-            log_command(hostname, command, results)
+            #log_command(hostname, command, results)
             print("\nCommand execution result is : \n" + results + "\n")
             return "Done"
         except:

