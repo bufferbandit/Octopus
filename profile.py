@@ -43,3 +43,11 @@ mshta_url = "/hta"
 # auto kill value after n tries
 
 auto_kill = 10
+
+
+webinterface_url = "/webinterface"
+
+
+startup_listener_name = "startup"
+startup_listener_interval = "1"
+startup_listener_url = "r"

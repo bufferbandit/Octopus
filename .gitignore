@@ -4,3 +4,4 @@ __init__.py
 .oct_history
 .DS_Store
 logs
+static/downloads

